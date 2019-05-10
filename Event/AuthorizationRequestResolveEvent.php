@@ -25,25 +25,16 @@ final class AuthorizationRequestResolveEvent extends Event
      */
     private $response;
 
-    /**
-     * @var bool
-     */
-    private $authorizationResolution = self::AUTHORIZATION_DENIED;
-
     public function __construct(AuthorizationRequest $authorizationRequest)
     {
         $this->authorizationRequest = $authorizationRequest;
     }
 
-    public function getAuthorizationResolution(): bool
-    {
-        return $this->authorizationResolution;
-    }
-
     public function resolveAuthorization(bool $authorizationResolution): void
     {
-        $this->authorizationResolution = $authorizationResolution;
+        $this->authorizationRequest->setAuthorizationApproved($authorizationResolution);
         $this->response = null;
+        $this->stopPropagation();
     }
 
     public function hasResponse(): bool
@@ -63,6 +54,7 @@ final class AuthorizationRequestResolveEvent extends Event
     public function setResponse(ResponseInterface $response): void
     {
         $this->response = $response;
+        $this->stopPropagation();
     }
 
     public function getGrantTypeId(): string
