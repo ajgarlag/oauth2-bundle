@@ -4,17 +4,24 @@ declare(strict_types=1);
 
 namespace Trikoder\Bundle\OAuth2Bundle\Tests;
 
+use DateTimeImmutable;
+use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Laminas\Diactoros\ResponseFactory;
 use Laminas\Diactoros\ServerRequestFactory;
 use Laminas\Diactoros\StreamFactory;
 use Laminas\Diactoros\UploadedFileFactory;
+use Lcobucci\Clock\Clock;
+use Lcobucci\Clock\FrozenClock;
 use LogicException;
 use Nyholm\Psr7\Factory as Nyholm;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\UploadedFileFactoryInterface;
+use Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle;
+use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+use Symfony\Bundle\SecurityBundle\SecurityBundle;
 use Symfony\Component\Config\Exception\LoaderLoadException;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
@@ -32,6 +39,7 @@ use Trikoder\Bundle\OAuth2Bundle\Tests\Fixtures\FakeGrant;
 use Trikoder\Bundle\OAuth2Bundle\Tests\Fixtures\FixtureFactory;
 use Trikoder\Bundle\OAuth2Bundle\Tests\Fixtures\SecurityTestController;
 use Trikoder\Bundle\OAuth2Bundle\Tests\Support\SqlitePlatform;
+use Trikoder\Bundle\OAuth2Bundle\TrikoderOAuth2Bundle;
 
 final class TestKernel extends Kernel implements CompilerPassInterface
 {
@@ -62,11 +70,11 @@ final class TestKernel extends Kernel implements CompilerPassInterface
     public function registerBundles()
     {
         return [
-            new \Doctrine\Bundle\DoctrineBundle\DoctrineBundle(),
-            new \Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle(),
-            new \Symfony\Bundle\FrameworkBundle\FrameworkBundle(),
-            new \Symfony\Bundle\SecurityBundle\SecurityBundle(),
-            new \Trikoder\Bundle\OAuth2Bundle\TrikoderOAuth2Bundle(),
+            new DoctrineBundle(),
+            new SensioFrameworkExtraBundle(),
+            new FrameworkBundle(),
+            new SecurityBundle(),
+            new TrikoderOAuth2Bundle(),
         ];
     }
 
@@ -219,6 +227,7 @@ final class TestKernel extends Kernel implements CompilerPassInterface
         $this->configurePsrHttpFactory($container);
         $this->configureDatabaseServices($container);
         $this->registerFakeGrant($container);
+        $this->registerFrozenClock($container);
     }
 
     private function exposeManagerServices(ContainerBuilder $container): void
@@ -329,6 +338,15 @@ final class TestKernel extends Kernel implements CompilerPassInterface
     private function registerFakeGrant(ContainerBuilder $container): void
     {
         $container->register(FakeGrant::class)->setAutoconfigured(true);
+    }
+
+    private function registerFrozenClock(ContainerBuilder $container): void
+    {
+        $container->register(FrozenClock::class)->setArguments([
+            new Definition(DateTimeImmutable::class),
+        ]);
+
+        $container->setAlias(Clock::class, FrozenClock::class)->setPublic(true);
     }
 
     private function determinePsrHttpFactory(): void

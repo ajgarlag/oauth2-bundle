@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Trikoder\Bundle\OAuth2Bundle\Tests\Integration;
 
 use DateInterval;
+use DateTimeImmutable;
 use Defuse\Crypto\Crypto;
 use Defuse\Crypto\Exception\CryptoException;
+use Lcobucci\Clock\FrozenClock;
 use League\OAuth2\Server\AuthorizationServer;
 use League\OAuth2\Server\CryptKey;
 use League\OAuth2\Server\Exception\OAuthServerException;
@@ -53,6 +55,11 @@ use Trikoder\Bundle\OAuth2Bundle\Tests\TestHelper;
 
 abstract class AbstractIntegrationTest extends TestCase
 {
+    /**
+     * @var FrozenClock
+     */
+    protected $clock;
+
     /**
      * @var ScopeManagerInterface
      */
@@ -108,11 +115,12 @@ abstract class AbstractIntegrationTest extends TestCase
      */
     protected function setUp(): void
     {
+        $this->clock = new FrozenClock(new DateTimeImmutable());
         $this->scopeManager = new ScopeManager();
         $this->clientManager = new ClientManager();
-        $this->accessTokenManager = new AccessTokenManager();
-        $this->refreshTokenManager = new RefreshTokenManager();
-        $this->authCodeManager = new AuthorizationCodeManager();
+        $this->accessTokenManager = new AccessTokenManager($this->clock);
+        $this->refreshTokenManager = new RefreshTokenManager($this->clock);
+        $this->authCodeManager = new AuthorizationCodeManager($this->clock);
         $this->eventDispatcher = new EventDispatcher();
 
         $scopeConverter = new ScopeConverter();

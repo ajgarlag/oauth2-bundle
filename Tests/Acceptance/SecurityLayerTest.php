@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Trikoder\Bundle\OAuth2Bundle\Tests\Acceptance;
 
+use Lcobucci\Clock\Clock;
 use Trikoder\Bundle\OAuth2Bundle\Manager\AccessTokenManagerInterface;
 use Trikoder\Bundle\OAuth2Bundle\Manager\AuthorizationCodeManagerInterface;
 use Trikoder\Bundle\OAuth2Bundle\Manager\ClientManagerInterface;
@@ -23,7 +24,8 @@ final class SecurityLayerTest extends AbstractAcceptanceTest
             $this->client->getContainer()->get(ClientManagerInterface::class),
             $this->client->getContainer()->get(AccessTokenManagerInterface::class),
             $this->client->getContainer()->get(RefreshTokenManagerInterface::class),
-            $this->client->getContainer()->get(AuthorizationCodeManagerInterface::class)
+            $this->client->getContainer()->get(AuthorizationCodeManagerInterface::class),
+            $this->client->getContainer()->get(Clock::class)
         );
     }
 

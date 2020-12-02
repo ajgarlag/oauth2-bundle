@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Trikoder\Bundle\OAuth2Bundle\Tests\Fixtures;
 
 use DateTimeImmutable;
+use Lcobucci\Clock\Clock;
 use Trikoder\Bundle\OAuth2Bundle\Manager\AccessTokenManagerInterface;
 use Trikoder\Bundle\OAuth2Bundle\Manager\AuthorizationCodeManagerInterface;
 use Trikoder\Bundle\OAuth2Bundle\Manager\ClientManagerInterface;
@@ -78,7 +79,8 @@ final class FixtureFactory
         ClientManagerInterface $clientManager,
         AccessTokenManagerInterface $accessTokenManager,
         RefreshTokenManagerInterface $refreshTokenManager,
-        AuthorizationCodeManagerInterface $authCodeManager
+        AuthorizationCodeManagerInterface $authCodeManager,
+        Clock $clock
     ): void {
         foreach (self::createScopes() as $scope) {
             $scopeManager->save($scope);
@@ -88,15 +90,15 @@ final class FixtureFactory
             $clientManager->save($client);
         }
 
-        foreach (self::createAccessTokens($scopeManager, $clientManager) as $accessToken) {
+        foreach (self::createAccessTokens($scopeManager, $clientManager, $clock) as $accessToken) {
             $accessTokenManager->save($accessToken);
         }
 
-        foreach (self::createRefreshTokens($accessTokenManager) as $refreshToken) {
+        foreach (self::createRefreshTokens($accessTokenManager, $clock) as $refreshToken) {
             $refreshTokenManager->save($refreshToken);
         }
 
-        foreach (self::createAuthorizationCodes($clientManager) as $authorizationCode) {
+        foreach (self::createAuthorizationCodes($clientManager, $clock) as $authorizationCode) {
             $authCodeManager->save($authorizationCode);
         }
     }
@@ -104,13 +106,13 @@ final class FixtureFactory
     /**
      * @return AccessToken[]
      */
-    private static function createAccessTokens(ScopeManagerInterface $scopeManager, ClientManagerInterface $clientManager): array
+    private static function createAccessTokens(ScopeManagerInterface $scopeManager, ClientManagerInterface $clientManager, Clock $clock): array
     {
         $accessTokens = [];
 
         $accessTokens[] = (new AccessToken(
             self::FIXTURE_ACCESS_TOKEN_USER_BOUND,
-            new DateTimeImmutable('+1 hour'),
+            $clock->now()->modify('+1 hour'),
             $clientManager->find(self::FIXTURE_CLIENT_FIRST),
             self::FIXTURE_USER,
             []
@@ -118,7 +120,7 @@ final class FixtureFactory
 
         $accessTokens[] = (new AccessToken(
             self::FIXTURE_ACCESS_TOKEN_DIFFERENT_CLIENT,
-            new DateTimeImmutable('+1 hour'),
+            $clock->now()->modify('+1 hour'),
             $clientManager->find(self::FIXTURE_CLIENT_SECOND),
             self::FIXTURE_USER,
             []
@@ -126,7 +128,7 @@ final class FixtureFactory
 
         $accessTokens[] = (new AccessToken(
             self::FIXTURE_ACCESS_TOKEN_EXPIRED,
-            new DateTimeImmutable('-1 hour'),
+            $clock->now()->modify('-1 hour'),
             $clientManager->find(self::FIXTURE_CLIENT_FIRST),
             self::FIXTURE_USER,
             []
@@ -134,7 +136,7 @@ final class FixtureFactory
 
         $accessTokens[] = (new AccessToken(
             self::FIXTURE_ACCESS_TOKEN_REVOKED,
-            new DateTimeImmutable('+1 hour'),
+            $clock->now()->modify('+1 hour'),
             $clientManager->find(self::FIXTURE_CLIENT_FIRST),
             self::FIXTURE_USER,
             []
@@ -143,7 +145,7 @@ final class FixtureFactory
 
         $accessTokens[] = new AccessToken(
             self::FIXTURE_ACCESS_TOKEN_PUBLIC,
-            new DateTimeImmutable('+1 hour'),
+            $clock->now()->modify('+1 hour'),
             $clientManager->find(self::FIXTURE_CLIENT_FIRST),
             null,
             []
@@ -151,7 +153,7 @@ final class FixtureFactory
 
         $accessTokens[] = (new AccessToken(
             self::FIXTURE_ACCESS_TOKEN_WITH_SCOPES,
-            new DateTimeImmutable('+1 hour'),
+            $clock->now()->modify('+1 hour'),
             $clientManager->find(self::FIXTURE_CLIENT_FIRST),
             null,
             [$scopeManager->find(self::FIXTURE_SCOPE_FIRST)]
@@ -159,7 +161,7 @@ final class FixtureFactory
 
         $accessTokens[] = (new AccessToken(
             self::FIXTURE_ACCESS_TOKEN_USER_BOUND_WITH_SCOPES,
-            new DateTimeImmutable('+1 hour'),
+            $clock->now()->modify('+1 hour'),
             $clientManager->find(self::FIXTURE_CLIENT_FIRST),
             self::FIXTURE_USER,
             [$scopeManager->find(self::FIXTURE_SCOPE_FIRST)]
@@ -171,38 +173,38 @@ final class FixtureFactory
     /**
      * @return RefreshToken[]
      */
-    private static function createRefreshTokens(AccessTokenManagerInterface $accessTokenManager): array
+    private static function createRefreshTokens(AccessTokenManagerInterface $accessTokenManager, Clock $clock): array
     {
         $refreshTokens = [];
 
         $refreshTokens[] = new RefreshToken(
             self::FIXTURE_REFRESH_TOKEN,
-            new DateTimeImmutable('+1 month'),
+            $clock->now()->modify('+1 month'),
             $accessTokenManager->find(self::FIXTURE_ACCESS_TOKEN_USER_BOUND)
         );
 
         $refreshTokens[] = new RefreshToken(
             self::FIXTURE_REFRESH_TOKEN_DIFFERENT_CLIENT,
-            new DateTimeImmutable('+1 month'),
+            $clock->now()->modify('+1 month'),
             $accessTokenManager->find(self::FIXTURE_ACCESS_TOKEN_DIFFERENT_CLIENT)
         );
 
         $refreshTokens[] = new RefreshToken(
             self::FIXTURE_REFRESH_TOKEN_EXPIRED,
-            new DateTimeImmutable('-1 month'),
+            $clock->now()->modify('-1 month'),
             $accessTokenManager->find(self::FIXTURE_ACCESS_TOKEN_EXPIRED)
         );
 
         $refreshTokens[] = (new RefreshToken(
             self::FIXTURE_REFRESH_TOKEN_REVOKED,
-            new DateTimeImmutable('+1 month'),
+            $clock->now()->modify('+1 month'),
             $accessTokenManager->find(self::FIXTURE_ACCESS_TOKEN_REVOKED)
         ))
             ->revoke();
 
         $refreshTokens[] = new RefreshToken(
             self::FIXTURE_REFRESH_TOKEN_WITH_SCOPES,
-            new DateTimeImmutable('+1 month'),
+            $clock->now()->modify('+1 month'),
             $accessTokenManager->find(self::FIXTURE_ACCESS_TOKEN_USER_BOUND_WITH_SCOPES)
         );
 
@@ -212,13 +214,13 @@ final class FixtureFactory
     /**
      * @return AuthorizationCode[]
      */
-    public static function createAuthorizationCodes(ClientManagerInterface $clientManager): array
+    public static function createAuthorizationCodes(ClientManagerInterface $clientManager, Clock $clock): array
     {
         $authorizationCodes = [];
 
         $authorizationCodes[] = new AuthorizationCode(
             self::FIXTURE_AUTH_CODE,
-            new DateTimeImmutable('+2 minute'),
+            $clock->now()->modify('+2 minute'),
             $clientManager->find(self::FIXTURE_CLIENT_FIRST),
             self::FIXTURE_USER,
             []
@@ -226,7 +228,7 @@ final class FixtureFactory
 
         $authorizationCodes[] = new AuthorizationCode(
             self::FIXTURE_AUTH_CODE_PUBLIC_CLIENT,
-            new DateTimeImmutable('+2 minute'),
+            $clock->now()->modify('+2 minute'),
             $clientManager->find(self::FIXTURE_PUBLIC_CLIENT),
             self::FIXTURE_USER,
             []
@@ -234,7 +236,7 @@ final class FixtureFactory
 
         $authorizationCodes[] = new AuthorizationCode(
             self::FIXTURE_AUTH_CODE_DIFFERENT_CLIENT,
-            new DateTimeImmutable('+2 minute'),
+            $clock->now()->modify('+2 minute'),
             $clientManager->find(self::FIXTURE_CLIENT_SECOND),
             self::FIXTURE_USER,
             []
@@ -242,7 +244,7 @@ final class FixtureFactory
 
         $authorizationCodes[] = new AuthorizationCode(
             self::FIXTURE_AUTH_CODE_EXPIRED,
-            new DateTimeImmutable('-30 minute'),
+            $clock->now()->modify('-30 minute'),
             $clientManager->find(self::FIXTURE_CLIENT_FIRST),
             self::FIXTURE_USER,
             []
@@ -250,7 +252,7 @@ final class FixtureFactory
 
         $authorizationCodes[] = (new AuthorizationCode(
             self::FIXTURE_AUTH_CODE_REVOKED,
-            new DateTimeImmutable('+5 minute'),
+            $clock->now()->modify('+5 minute'),
             $clientManager->find(self::FIXTURE_CLIENT_FIRST),
             self::FIXTURE_USER,
             []

@@ -256,5 +256,9 @@
         <service id="Trikoder\Bundle\OAuth2Bundle\Security\Authentication\Token\OAuth2TokenFactory">
             <argument type="string" />
         </service>
+
+        <service id="Lcobucci\Clock\SystemClock" />
+
+        <service id="Lcobucci\Clock\Clock" alias="Lcobucci\Clock\SystemClock" />
     </services>
 </container>

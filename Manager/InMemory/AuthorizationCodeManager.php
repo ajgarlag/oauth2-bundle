@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Trikoder\Bundle\OAuth2Bundle\Manager\InMemory;
 
-use DateTimeImmutable;
+use Lcobucci\Clock\Clock;
 use Trikoder\Bundle\OAuth2Bundle\Manager\AuthorizationCodeManagerInterface;
 use Trikoder\Bundle\OAuth2Bundle\Model\AuthorizationCode;
 
@@ -14,6 +14,16 @@ final class AuthorizationCodeManager implements AuthorizationCodeManagerInterfac
      * @var AuthorizationCode[]
      */
     private $authorizationCodes = [];
+
+    /**
+     * @var Clock
+     */
+    private $clock;
+
+    public function __construct(Clock $clock)
+    {
+        $this->clock = $clock;
+    }
 
     public function find(string $identifier): ?AuthorizationCode
     {
@@ -29,7 +39,7 @@ final class AuthorizationCodeManager implements AuthorizationCodeManagerInterfac
     {
         $count = \count($this->authorizationCodes);
 
-        $now = new DateTimeImmutable();
+        $now = $this->clock->now();
         $this->authorizationCodes = array_filter($this->authorizationCodes, static function (AuthorizationCode $authorizationCode) use ($now): bool {
             return $authorizationCode->getExpiryDateTime() >= $now;
         });

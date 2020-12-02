@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Trikoder\Bundle\OAuth2Bundle\Manager\Doctrine;
 
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Lcobucci\Clock\Clock;
 use Trikoder\Bundle\OAuth2Bundle\Manager\RefreshTokenManagerInterface;
 use Trikoder\Bundle\OAuth2Bundle\Model\RefreshToken;
 
@@ -16,9 +16,15 @@ final class RefreshTokenManager implements RefreshTokenManagerInterface
      */
     private $entityManager;
 
-    public function __construct(EntityManagerInterface $entityManager)
+    /**
+     * @var Clock
+     */
+    private $clock;
+
+    public function __construct(EntityManagerInterface $entityManager, Clock $clock)
     {
         $this->entityManager = $entityManager;
+        $this->clock = $clock;
     }
 
     /**
@@ -43,7 +49,7 @@ final class RefreshTokenManager implements RefreshTokenManagerInterface
         return $this->entityManager->createQueryBuilder()
             ->delete(RefreshToken::class, 'rt')
             ->where('rt.expiry < :expiry')
-            ->setParameter('expiry', new DateTimeImmutable())
+            ->setParameter('expiry', $this->clock->now())
             ->getQuery()
             ->execute();
     }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Trikoder\Bundle\OAuth2Bundle\Tests\Acceptance;
 
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Lcobucci\Clock\Clock;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 use Trikoder\Bundle\OAuth2Bundle\Manager\AccessTokenManagerInterface;
@@ -24,22 +24,14 @@ final class ClearExpiredTokensCommandTest extends AbstractAcceptanceTest
     {
         parent::setUp();
 
-        timecop_freeze(new DateTimeImmutable());
-
         FixtureFactory::initializeFixtures(
             $this->client->getContainer()->get(ScopeManagerInterface::class),
             $this->client->getContainer()->get(ClientManagerInterface::class),
             $this->client->getContainer()->get(AccessTokenManagerInterface::class),
             $this->client->getContainer()->get(RefreshTokenManagerInterface::class),
-            $this->client->getContainer()->get(AuthorizationCodeManagerInterface::class)
+            $this->client->getContainer()->get(AuthorizationCodeManagerInterface::class),
+            $this->client->getContainer()->get(Clock::class)
         );
-    }
-
-    protected function tearDown(): void
-    {
-        timecop_return();
-
-        parent::tearDown();
     }
 
     public function testClearExpiredAccessAndRefreshTokensAndAuthCodes(): void

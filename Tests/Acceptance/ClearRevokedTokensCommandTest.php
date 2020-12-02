@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Trikoder\Bundle\OAuth2Bundle\Tests\Acceptance;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Lcobucci\Clock\Clock;
+use ReflectionClass;
 use stdClass;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -30,7 +32,8 @@ final class ClearRevokedTokensCommandTest extends AbstractAcceptanceTest
             $this->client->getContainer()->get(ClientManagerInterface::class),
             $this->client->getContainer()->get(AccessTokenManagerInterface::class),
             $this->client->getContainer()->get(RefreshTokenManagerInterface::class),
-            $this->client->getContainer()->get(AuthorizationCodeManagerInterface::class)
+            $this->client->getContainer()->get(AuthorizationCodeManagerInterface::class),
+            $this->client->getContainer()->get(Clock::class)
         );
     }
 
@@ -168,7 +171,7 @@ final class ClearRevokedTokensCommandTest extends AbstractAcceptanceTest
 
     public function testWarningIsIssuedIfClearRevokedMethodIsNotImplemented(): void
     {
-        $reflection = new \ReflectionClass(ClearRevokedTokensCommand::class);
+        $reflection = new ReflectionClass(ClearRevokedTokensCommand::class);
         $clearRevokedMethodExists = $reflection->getMethod('clearRevokedMethodExists');
         $clearRevokedMethodExists->setAccessible(true);
 

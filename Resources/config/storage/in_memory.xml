@@ -17,12 +17,16 @@
             <deprecated>The "%alias_id%" service alias is deprecated and will be removed in v4.</deprecated>
         </service>
 
-        <service id="Trikoder\Bundle\OAuth2Bundle\Manager\InMemory\AccessTokenManager" />
+        <service id="Trikoder\Bundle\OAuth2Bundle\Manager\InMemory\AccessTokenManager">
+            <argument type="service" id="Lcobucci\Clock\Clock" />
+        </service>
         <service id="trikoder.oauth2.manager.in_memory.access_token_manager" alias="Trikoder\Bundle\OAuth2Bundle\Manager\InMemory\AccessTokenManager">
             <deprecated>The "%alias_id%" service alias is deprecated and will be removed in v4.</deprecated>
         </service>
 
-        <service id="Trikoder\Bundle\OAuth2Bundle\Manager\InMemory\RefreshTokenManager" />
+        <service id="Trikoder\Bundle\OAuth2Bundle\Manager\InMemory\RefreshTokenManager">
+            <argument type="service" id="Lcobucci\Clock\Clock" />
+        </service>
         <service id="trikoder.oauth2.manager.in_memory.refresh_token_manager" alias="Trikoder\Bundle\OAuth2Bundle\Manager\InMemory\RefreshTokenManager">
             <deprecated>The "%alias_id%" service alias is deprecated and will be removed in v4.</deprecated>
         </service>
@@ -32,7 +36,9 @@
             <deprecated>The "%alias_id%" service alias is deprecated and will be removed in v4.</deprecated>
         </service>
 
-        <service id="Trikoder\Bundle\OAuth2Bundle\Manager\InMemory\AuthorizationCodeManager" />
+        <service id="Trikoder\Bundle\OAuth2Bundle\Manager\InMemory\AuthorizationCodeManager">
+            <argument type="service" id="Lcobucci\Clock\Clock" />
+        </service>
         <service id="trikoder.oauth2.manager.in_memory.authorization_code_manager" alias="Trikoder\Bundle\OAuth2Bundle\Manager\InMemory\AuthorizationCodeManager">
             <deprecated>The "%alias_id%" service alias is deprecated and will be removed in v4.</deprecated>
         </service>
