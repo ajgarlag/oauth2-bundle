@@ -17,6 +17,9 @@ use Trikoder\Bundle\OAuth2Bundle\Model\RefreshToken;
  */
 final class DoctrineAccessTokenManagerTest extends AbstractAcceptanceTest
 {
+    /**
+     * @group time-sensitive
+     */
     public function testClearExpired(): void
     {
         /** @var EntityManagerInterface $em */
@@ -28,20 +31,14 @@ final class DoctrineAccessTokenManagerTest extends AbstractAcceptanceTest
         $em->persist($client);
         $em->flush();
 
-        timecop_freeze(new DateTimeImmutable());
+        $testData = $this->buildClearExpiredTestData($client);
 
-        try {
-            $testData = $this->buildClearExpiredTestData($client);
-
-            /** @var AccessToken $token */
-            foreach ($testData['input'] as $token) {
-                $doctrineAccessTokenManager->save($token);
-            }
-
-            $this->assertSame(3, $doctrineAccessTokenManager->clearExpired());
-        } finally {
-            timecop_return();
+        /** @var AccessToken $token */
+        foreach ($testData['input'] as $token) {
+            $doctrineAccessTokenManager->save($token);
         }
+
+        $this->assertSame(3, $doctrineAccessTokenManager->clearExpired());
 
         $this->assertSame(
             $testData['output'],
@@ -55,7 +52,7 @@ final class DoctrineAccessTokenManagerTest extends AbstractAcceptanceTest
             $this->buildAccessToken('1111', '+1 day', $client),
             $this->buildAccessToken('2222', '+1 hour', $client),
             $this->buildAccessToken('3333', '+1 second', $client),
-            $this->buildAccessToken('4444', 'now', $client),
+            $this->buildAccessToken('4444', '+0 second', $client),
         ];
 
         $expiredAccessTokens = [
@@ -117,9 +114,11 @@ final class DoctrineAccessTokenManagerTest extends AbstractAcceptanceTest
 
     private function buildAccessToken(string $identifier, string $modify, Client $client, bool $revoked = false): AccessToken
     {
+        $expiry = DateTimeImmutable::createFromFormat('U', (string) time())->modify($modify);
+
         $accessToken = new AccessToken(
             $identifier,
-            new DateTimeImmutable($modify),
+            $expiry,
             $client,
             null,
             []
@@ -142,23 +141,17 @@ final class DoctrineAccessTokenManagerTest extends AbstractAcceptanceTest
         $em->persist($client);
         $em->flush();
 
-        timecop_freeze(new DateTimeImmutable());
+        $testData = $this->buildClearExpiredTestDataWithRefreshToken($client);
 
-        try {
-            $testData = $this->buildClearExpiredTestDataWithRefreshToken($client);
-
-            /** @var RefreshToken $token */
-            foreach ($testData['input'] as $token) {
-                $doctrineAccessTokenManager->save($token->getAccessToken());
-                $em->persist($token);
-            }
-
-            $em->flush();
-
-            $this->assertSame(3, $doctrineAccessTokenManager->clearExpired());
-        } finally {
-            timecop_return();
+        /** @var RefreshToken $token */
+        foreach ($testData['input'] as $token) {
+            $doctrineAccessTokenManager->save($token->getAccessToken());
+            $em->persist($token);
         }
+
+        $em->flush();
+
+        $this->assertSame(3, $doctrineAccessTokenManager->clearExpired());
 
         $this->assertSame(
             $testData['output'],
@@ -172,7 +165,7 @@ final class DoctrineAccessTokenManagerTest extends AbstractAcceptanceTest
             $this->buildRefreshToken('1111', '+1 day', $client),
             $this->buildRefreshToken('2222', '+1 hour', $client),
             $this->buildRefreshToken('3333', '+1 second', $client),
-            $this->buildRefreshToken('4444', 'now', $client),
+            $this->buildRefreshToken('4444', '+0 second', $client),
         ];
 
         $expiredRefreshTokens = [
@@ -238,16 +231,18 @@ final class DoctrineAccessTokenManagerTest extends AbstractAcceptanceTest
 
     private function buildRefreshToken(string $identifier, string $modify, Client $client, bool $revoked = false): RefreshToken
     {
+        $expiry = DateTimeImmutable::createFromFormat('U', (string) time())->modify($modify);
+
         $accessToken = new AccessToken(
             $identifier,
-            new DateTimeImmutable($modify),
+            $expiry,
             $client,
             null,
             []
         );
         $refreshToken = new RefreshToken(
             $identifier,
-            new DateTimeImmutable('+1 day'),
+            DateTimeImmutable::createFromFormat('U', (string) time())->modify('+1 day'),
             $accessToken
         );
 

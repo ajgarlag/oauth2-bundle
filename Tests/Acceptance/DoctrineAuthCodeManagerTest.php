@@ -16,6 +16,9 @@ use Trikoder\Bundle\OAuth2Bundle\Model\Client;
  */
 final class DoctrineAuthCodeManagerTest extends AbstractAcceptanceTest
 {
+    /**
+     * @group time-sensitive
+     */
     public function testClearExpired(): void
     {
         /** @var EntityManagerInterface $em */
@@ -26,22 +29,16 @@ final class DoctrineAuthCodeManagerTest extends AbstractAcceptanceTest
         $client = new Client('client', 'secret');
         $em->persist($client);
 
-        timecop_freeze(new DateTimeImmutable());
+        $testData = $this->buildClearExpiredTestData($client);
 
-        try {
-            $testData = $this->buildClearExpiredTestData($client);
-
-            /** @var AuthorizationCode $authCode */
-            foreach ($testData['input'] as $authCode) {
-                $doctrineAuthCodeManager->save($authCode);
-            }
-
-            $em->flush();
-
-            $this->assertSame(3, $doctrineAuthCodeManager->clearExpired());
-        } finally {
-            timecop_return();
+        /** @var AuthorizationCode $authCode */
+        foreach ($testData['input'] as $authCode) {
+            $doctrineAuthCodeManager->save($authCode);
         }
+
+        $em->flush();
+
+        $this->assertSame(3, $doctrineAuthCodeManager->clearExpired());
 
         $this->assertSame(
             $testData['output'],
@@ -55,7 +52,7 @@ final class DoctrineAuthCodeManagerTest extends AbstractAcceptanceTest
             $this->buildAuthCode('1111', '+1 day', $client),
             $this->buildAuthCode('2222', '+1 hour', $client),
             $this->buildAuthCode('3333', '+1 second', $client),
-            $this->buildAuthCode('4444', 'now', $client),
+            $this->buildAuthCode('4444', '+0 second', $client),
         ];
 
         $expiredAuthCodes = [
@@ -118,9 +115,11 @@ final class DoctrineAuthCodeManagerTest extends AbstractAcceptanceTest
 
     private function buildAuthCode(string $identifier, string $modify, Client $client, bool $revoked = false): AuthorizationCode
     {
+        $expiry = DateTimeImmutable::createFromFormat('U', (string) time())->modify($modify);
+
         $authorizationCode = new AuthorizationCode(
             $identifier,
-            new DateTimeImmutable($modify),
+            $expiry,
             $client,
             null,
             []

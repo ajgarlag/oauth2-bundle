@@ -13,24 +13,21 @@ use Trikoder\Bundle\OAuth2Bundle\Model\Client;
 
 final class InMemoryAccessTokenManagerTest extends TestCase
 {
+    /**
+     * @group time-sensitive
+     */
     public function testClearExpired(): void
     {
         $inMemoryAccessTokenManager = new InMemoryAccessTokenManager();
 
-        timecop_freeze(new DateTimeImmutable());
+        $testData = $this->buildClearExpiredTestData();
 
-        try {
-            $testData = $this->buildClearExpiredTestData();
-
-            foreach ($testData['input'] as $token) {
-                $inMemoryAccessTokenManager->save($token);
-            }
-
-            $this->assertSame(3, $inMemoryAccessTokenManager->clearExpired());
-            $this->assertManagerContainsExpectedData($testData['output'], $inMemoryAccessTokenManager);
-        } finally {
-            timecop_return();
+        foreach ($testData['input'] as $token) {
+            $inMemoryAccessTokenManager->save($token);
         }
+
+        $this->assertSame(3, $inMemoryAccessTokenManager->clearExpired());
+        $this->assertManagerContainsExpectedData($testData['output'], $inMemoryAccessTokenManager);
     }
 
     private function buildClearExpiredTestData(): array
@@ -39,7 +36,7 @@ final class InMemoryAccessTokenManagerTest extends TestCase
             '1111' => $this->buildAccessToken('1111', '+1 day'),
             '2222' => $this->buildAccessToken('2222', '+1 hour'),
             '3333' => $this->buildAccessToken('3333', '+1 second'),
-            '4444' => $this->buildAccessToken('4444', 'now'),
+            '4444' => $this->buildAccessToken('4444', '+0 second'),
         ];
 
         $expiredAccessTokens = [
@@ -89,9 +86,11 @@ final class InMemoryAccessTokenManagerTest extends TestCase
 
     private function buildAccessToken(string $identifier, string $modify, bool $revoked = false): AccessToken
     {
+        $expiry = DateTimeImmutable::createFromFormat('U', (string) time())->modify($modify);
+
         $accessToken = new AccessToken(
             $identifier,
-            new DateTimeImmutable($modify),
+            $expiry,
             new Client('client', 'secret'),
             null,
             []

@@ -43,7 +43,7 @@ final class RefreshTokenManager implements RefreshTokenManagerInterface
         return $this->entityManager->createQueryBuilder()
             ->delete(RefreshToken::class, 'rt')
             ->where('rt.expiry < :expiry')
-            ->setParameter('expiry', new DateTimeImmutable())
+            ->setParameter('expiry', DateTimeImmutable::createFromFormat('U', (string) time()))
             ->getQuery()
             ->execute();
     }

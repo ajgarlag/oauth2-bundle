@@ -43,7 +43,7 @@ final class AccessTokenManager implements AccessTokenManagerInterface
         return $this->entityManager->createQueryBuilder()
             ->delete(AccessToken::class, 'at')
             ->where('at.expiry < :expiry')
-            ->setParameter('expiry', new DateTimeImmutable())
+            ->setParameter('expiry', DateTimeImmutable::createFromFormat('U', (string) time()))
             ->getQuery()
             ->execute();
     }

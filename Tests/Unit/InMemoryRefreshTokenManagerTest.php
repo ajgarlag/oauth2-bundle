@@ -14,24 +14,21 @@ use Trikoder\Bundle\OAuth2Bundle\Model\RefreshToken;
 
 final class InMemoryRefreshTokenManagerTest extends TestCase
 {
+    /**
+     * @group time-sensitive
+     */
     public function testClearExpired(): void
     {
         $inMemoryRefreshTokenManager = new InMemoryRefreshTokenManager();
 
-        timecop_freeze(new DateTimeImmutable());
+        $testData = $this->buildClearExpiredTestData();
 
-        try {
-            $testData = $this->buildClearExpiredTestData();
-
-            foreach ($testData['input'] as $token) {
-                $inMemoryRefreshTokenManager->save($token);
-            }
-
-            $this->assertSame(3, $inMemoryRefreshTokenManager->clearExpired());
-            $this->assertManagerContainsExpectedData($testData['output'], $inMemoryRefreshTokenManager);
-        } finally {
-            timecop_return();
+        foreach ($testData['input'] as $token) {
+            $inMemoryRefreshTokenManager->save($token);
         }
+
+        $this->assertSame(3, $inMemoryRefreshTokenManager->clearExpired());
+        $this->assertManagerContainsExpectedData($testData['output'], $inMemoryRefreshTokenManager);
     }
 
     private function buildClearExpiredTestData(): array
@@ -40,7 +37,7 @@ final class InMemoryRefreshTokenManagerTest extends TestCase
             '1111' => $this->buildRefreshToken('1111', '+1 day'),
             '2222' => $this->buildRefreshToken('2222', '+1 hour'),
             '3333' => $this->buildRefreshToken('3333', '+1 second'),
-            '4444' => $this->buildRefreshToken('4444', 'now'),
+            '4444' => $this->buildRefreshToken('4444', '+0 second'),
         ];
 
         $expiredRefreshTokens = [
@@ -90,12 +87,13 @@ final class InMemoryRefreshTokenManagerTest extends TestCase
 
     private function buildRefreshToken(string $identifier, string $modify, bool $revoked = false): RefreshToken
     {
+        $expiry = DateTimeImmutable::createFromFormat('U', (string) time())->modify($modify);
         $refreshToken = new RefreshToken(
             $identifier,
-            new DateTimeImmutable($modify),
+            $expiry,
             new AccessToken(
                 $identifier,
-                new DateTimeImmutable('+1 day'),
+                DateTimeImmutable::createFromFormat('U', (string) time())->modify('+1 day'),
                 new Client('client', 'secret'),
                 null,
                 []

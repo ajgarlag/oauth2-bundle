@@ -13,24 +13,21 @@ use Trikoder\Bundle\OAuth2Bundle\Model\Client;
 
 final class InMemoryAuthCodeManagerTest extends TestCase
 {
+    /**
+     * @group time-sensitive
+     */
     public function testClearExpired(): void
     {
         $inMemoryAuthCodeManager = new InMemoryAuthCodeManager();
 
-        timecop_freeze(new DateTimeImmutable());
+        $testData = $this->buildClearExpiredTestData();
 
-        try {
-            $testData = $this->buildClearExpiredTestData();
-
-            foreach ($testData['input'] as $token) {
-                $inMemoryAuthCodeManager->save($token);
-            }
-
-            $this->assertSame(3, $inMemoryAuthCodeManager->clearExpired());
-            $this->assertManagerContainsExpectedData($testData['output'], $inMemoryAuthCodeManager);
-        } finally {
-            timecop_return();
+        foreach ($testData['input'] as $token) {
+            $inMemoryAuthCodeManager->save($token);
         }
+
+        $this->assertSame(3, $inMemoryAuthCodeManager->clearExpired());
+        $this->assertManagerContainsExpectedData($testData['output'], $inMemoryAuthCodeManager);
     }
 
     private function buildClearExpiredTestData(): array
@@ -39,7 +36,7 @@ final class InMemoryAuthCodeManagerTest extends TestCase
             '1111' => $this->buildAuthCode('1111', '+1 day'),
             '2222' => $this->buildAuthCode('2222', '+1 hour'),
             '3333' => $this->buildAuthCode('3333', '+1 second'),
-            '4444' => $this->buildAuthCode('4444', 'now'),
+            '4444' => $this->buildAuthCode('4444', '+0 second'),
         ];
 
         $expiredAuthCodes = [
@@ -89,9 +86,11 @@ final class InMemoryAuthCodeManagerTest extends TestCase
 
     private function buildAuthCode(string $identifier, string $modify, bool $revoked = false): AuthorizationCode
     {
+        $expiry = DateTimeImmutable::createFromFormat('U', (string) time())->modify($modify);
+
         $authorizationCode = new AuthorizationCode(
             $identifier,
-            new DateTimeImmutable($modify),
+            $expiry,
             new Client('client', 'secret'),
             null,
             []

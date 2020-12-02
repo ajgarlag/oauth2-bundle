@@ -43,7 +43,7 @@ final class AuthorizationCodeManager implements AuthorizationCodeManagerInterfac
         return $this->entityManager->createQueryBuilder()
             ->delete(AuthorizationCode::class, 'ac')
             ->where('ac.expiry < :expiry')
-            ->setParameter('expiry', new DateTimeImmutable())
+            ->setParameter('expiry', DateTimeImmutable::createFromFormat('U', (string) time()))
             ->getQuery()
             ->execute();
     }

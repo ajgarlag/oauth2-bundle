@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace Trikoder\Bundle\OAuth2Bundle\Tests\Integration;
 
-use DateTimeImmutable;
 use Trikoder\Bundle\OAuth2Bundle\Event\UserResolveEvent;
 use Trikoder\Bundle\OAuth2Bundle\Model\AccessToken;
 use Trikoder\Bundle\OAuth2Bundle\Model\RefreshToken;
 use Trikoder\Bundle\OAuth2Bundle\Tests\Fixtures\FixtureFactory;
 use Trikoder\Bundle\OAuth2Bundle\Tests\TestHelper;
 
+/**
+ * @group time-sensitive
+ */
 final class AuthorizationServerTest extends AbstractIntegrationTest
 {
     protected function setUp(): void
@@ -168,13 +170,7 @@ final class AuthorizationServerTest extends AbstractIntegrationTest
             'grant_type' => 'client_credentials',
         ]);
 
-        timecop_freeze(new DateTimeImmutable());
-
-        try {
-            $response = $this->handleTokenRequest($request);
-        } finally {
-            timecop_return();
-        }
+        $response = $this->handleTokenRequest($request);
 
         $accessToken = $this->getAccessToken($response['access_token']);
 
@@ -194,13 +190,7 @@ final class AuthorizationServerTest extends AbstractIntegrationTest
             'scope' => 'fancy',
         ]);
 
-        timecop_freeze(new DateTimeImmutable());
-
-        try {
-            $response = $this->handleTokenRequest($request);
-        } finally {
-            timecop_return();
-        }
+        $response = $this->handleTokenRequest($request);
 
         $accessToken = $this->getAccessToken($response['access_token']);
 
@@ -227,13 +217,7 @@ final class AuthorizationServerTest extends AbstractIntegrationTest
             'grant_type' => 'client_credentials',
         ]);
 
-        timecop_freeze(new DateTimeImmutable());
-
-        try {
-            $response = $this->handleTokenRequest($request);
-        } finally {
-            timecop_return();
-        }
+        $response = $this->handleTokenRequest($request);
 
         $accessToken = $this->getAccessToken($response['access_token']);
 
@@ -261,13 +245,7 @@ final class AuthorizationServerTest extends AbstractIntegrationTest
             'scope' => 'rock',
         ]);
 
-        timecop_freeze(new DateTimeImmutable());
-
-        try {
-            $response = $this->handleTokenRequest($request);
-        } finally {
-            timecop_return();
-        }
+        $response = $this->handleTokenRequest($request);
 
         $accessToken = $this->getAccessToken($response['access_token']);
 
@@ -300,13 +278,7 @@ final class AuthorizationServerTest extends AbstractIntegrationTest
             'password' => 'pass',
         ]);
 
-        timecop_freeze(new DateTimeImmutable());
-
-        try {
-            $response = $this->handleTokenRequest($request);
-        } finally {
-            timecop_return();
-        }
+        $response = $this->handleTokenRequest($request);
 
         $accessToken = $this->getAccessToken($response['access_token']);
         $refreshToken = $this->getRefreshToken($response['refresh_token']);
@@ -383,13 +355,7 @@ final class AuthorizationServerTest extends AbstractIntegrationTest
             'refresh_token' => TestHelper::generateEncryptedPayload($existingRefreshToken),
         ]);
 
-        timecop_freeze(new DateTimeImmutable());
-
-        try {
-            $response = $this->handleTokenRequest($request);
-        } finally {
-            timecop_return();
-        }
+        $response = $this->handleTokenRequest($request);
 
         $accessToken = $this->getAccessToken($response['access_token']);
         $refreshToken = $this->getRefreshToken($response['refresh_token']);
@@ -675,13 +641,7 @@ final class AuthorizationServerTest extends AbstractIntegrationTest
             'redirect_uri' => 'https://example.org/oauth2/redirect-uri',
         ]);
 
-        timecop_freeze(new DateTimeImmutable());
-
-        try {
-            $response = $this->handleTokenRequest($request);
-        } finally {
-            timecop_return();
-        }
+        $response = $this->handleTokenRequest($request);
 
         $accessToken = $this->getAccessToken($response['access_token']);
 
@@ -751,13 +711,7 @@ final class AuthorizationServerTest extends AbstractIntegrationTest
             'client_id' => 'foo',
         ]);
 
-        timecop_freeze(new DateTimeImmutable());
-
-        try {
-            $response = $this->handleAuthorizationRequest($request);
-        } finally {
-            timecop_return();
-        }
+        $response = $this->handleAuthorizationRequest($request);
 
         $this->assertSame(302, $response->getStatusCode());
         $responseData = [];
@@ -779,13 +733,7 @@ final class AuthorizationServerTest extends AbstractIntegrationTest
             'state' => 'quzbaz',
         ]);
 
-        timecop_freeze(new DateTimeImmutable());
-
-        try {
-            $response = $this->handleAuthorizationRequest($request);
-        } finally {
-            timecop_return();
-        }
+        $response = $this->handleAuthorizationRequest($request);
 
         $this->assertSame(302, $response->getStatusCode());
         $responseData = [];
@@ -808,13 +756,7 @@ final class AuthorizationServerTest extends AbstractIntegrationTest
             'redirect_uri' => 'https://example.org/oauth2/redirect-uri',
         ]);
 
-        timecop_freeze(new DateTimeImmutable());
-
-        try {
-            $response = $this->handleAuthorizationRequest($request);
-        } finally {
-            timecop_return();
-        }
+        $response = $this->handleAuthorizationRequest($request);
 
         $this->assertSame(302, $response->getStatusCode());
         $responseData = [];
